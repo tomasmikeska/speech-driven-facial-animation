@@ -7,7 +7,7 @@ specific person synchronized with the input signal.
 
 - Python 3.7 or newer
 - pip
-
+- virtualenv
 
 ### Installation
 
@@ -20,6 +20,16 @@ $ source venv/bin/activate
 Install PyPI packages
 ```
 $ pip install -r requirements.txt
+```
+
+Download GRID dataset
+```
+$ ./scripts/download-grid.sh
+```
+
+Extract faces from videos (creates videos with same paths only with '.aligned.mpg' extension)
+```
+$ python scripts/align_videos.py --videos_path 'data/grid/video/'
 ```
 
 
