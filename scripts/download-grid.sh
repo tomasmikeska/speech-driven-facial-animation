@@ -3,7 +3,7 @@ mkdir "grid" && cd "grid"
 mkdir "raw" "audio" "video"
 cd "raw" && mkdir "audio" "video"
 
-for i in `seq 1 3`
+for i in `seq 1 34`
 do
     printf "Downloading $i th speaker\n"
 
