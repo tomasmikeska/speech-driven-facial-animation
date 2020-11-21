@@ -32,11 +32,11 @@ class AudioEncoder(pl.LightningModule):
 
 class UNetFusion(pl.LightningModule):
 
-    def __init__(self, audio_encoder):
+    def __init__(self, learning_rate):
         super().__init__()
-        self.audio_encoder = audio_encoder
+        self.audio_encoder = AudioEncoder()
         self.loss_fn = nn.L1Loss()
-        self.learning_rate = 2e-4
+        self.learning_rate = learning_rate
 
         self.dconv_down1 = self.double_conv(3, 64)
         self.dconv_down2 = self.double_conv(64, 128)
@@ -112,3 +112,6 @@ class UNetFusion(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
+
+    def __str__(self):
+        return 'unet-fusion'

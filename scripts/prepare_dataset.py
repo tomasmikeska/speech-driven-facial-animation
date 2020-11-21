@@ -34,7 +34,7 @@ def find_data_paths(base_path):
     return [{'audio': p[0], 'video': p[1]} for p in audio_video_pairs]
 
 
-def build_dataset(base_path='data/grid/', target_path='data/processed/', audio_window_len=0.35):
+def build_dataset(base_path='data/grid/', target_path='data/grid/processed/', audio_window_len=0.35):
     pairs = find_data_paths(base_path)
 
     for pair_idx, pair in tqdm(list(enumerate(pairs))):

@@ -106,6 +106,7 @@ venv.bak/
 # custom
 bin/
 include/
+outputs/
 model/*
 *.h5
 *.hdf5

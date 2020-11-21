@@ -7,11 +7,15 @@ from utils import file_listing
 
 class GridDataset(Dataset):
 
-    def __init__(self, base_path,
+    def __init__(self, base_path, audio_freq, mfcc_winlen, mfcc_winstep, mfcc_n,
                  audio_transform=None,
                  id_image_transform=None,
                  target_image_transform=None):
         self.base_path = base_path
+        self.audio_freq = audio_freq
+        self.mfcc_winlen = mfcc_winlen
+        self.mfcc_winstep = mfcc_winstep
+        self.mfcc_n = mfcc_n
         self.filepaths = file_listing(base_path, extension='pkl')
         self.audio_transform = audio_transform
         self.id_image_transform = id_image_transform
@@ -22,10 +26,10 @@ class GridDataset(Dataset):
             index = index.tolist()
 
         data_point = pickle.load(open(self.filepaths[index], 'rb'))
-        data_point['audio'] = mfcc(data_point['audio'], 16000,
-                                   winlen=0.025,
-                                   winstep=0.01,
-                                   numcep=13).astype('float32')
+        data_point['audio'] = mfcc(data_point['audio'], self.audio_freq,
+                                   winlen=self.mfcc_winlen,
+                                   winstep=self.mfcc_winstep,
+                                   numcep=self.mfcc_n).astype('float32')
 
         if self.audio_transform:
             data_point['audio'] = self.audio_transform(data_point['audio'])
