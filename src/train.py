@@ -68,7 +68,6 @@ def train(cfg):
 
     trainer = pl.Trainer(gpus=cfg.gpus,
                          precision=cfg.precision,
-                         fast_dev_run=True,
                          logger=logger,
                          callbacks=[checkpoint_callback])
     trainer.fit(model, train_loader, val_loader)

@@ -28,9 +28,9 @@ Download GRID dataset
 $ ./scripts/download-grid.sh
 ```
 
-Extract faces from videos (creates videos with same paths only with '.aligned.mpg' extension)
+Prepare dataset (create .pkl files with short audio recordings with corresponding input and output image frame with faces extracted)
 ```
-$ python scripts/align_videos.py --videos_path 'data/grid/video/'
+$ python scripts/prepare_dataset.py
 ```
 
 
