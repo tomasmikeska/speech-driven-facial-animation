@@ -13,6 +13,9 @@ from tqdm import tqdm
 from math import floor, ceil
 
 
+STILL_IMAGE_OFFSET = 3
+
+
 def write_video(filepath, frames):
     skvideo.io.vwrite(filepath, frames.astype(np.uint8))
 
@@ -55,18 +58,18 @@ def find_data_paths(base_path):
     return [{'audio': p[0], 'video': p[1]} for p in audio_video_pairs]
 
 
-def process_pair(pair_idx, pair, target_path, audio_window_len):
+def process_pair(pair_idx, pair, target_path, audio_window_len, img_width, img_height):
     audio_freq, audio_np = read_audio(pair['audio'])
     video_np = read_video(pair['video'])
 
     video_meta = skvideo.io.ffprobe(pair['video'])
     video_frame_rate = int(video_meta['video']['@avg_frame_rate'].split('/')[0])  # Hz
     video_padding = ceil(audio_window_len / 2 * video_frame_rate)  # num of frames
-    still_image = video_np[0]
-    still_image = extract_face(still_image, 156, 156)
+    still_image = video_np[STILL_IMAGE_OFFSET]
+    still_image = extract_face(still_image, img_width, img_height)
 
     for idx, frame in enumerate(video_np[:-video_padding]):
-        frame = extract_face(frame, 156, 156)
+        frame = extract_face(frame, img_width, img_height)
         if idx > video_padding + 1:  # + 1 for still image (first frame in video)
             frame_time = idx / video_frame_rate  # seconds
             window_start_time = frame_time - audio_window_len / 2  # seconds
@@ -80,7 +83,9 @@ def process_pair(pair_idx, pair, target_path, audio_window_len):
 
 def build_dataset(base_path='data/grid/',
                   target_path='data/grid/processed/',
-                  audio_window_len=0.35,
+                  audio_win_len=0.35,
+                  img_width=156,
+                  img_height=156,
                   num_cores=multiprocessing.cpu_count()):
 
     if not os.path.exists(target_path):
@@ -90,7 +95,7 @@ def build_dataset(base_path='data/grid/',
     pairs = tqdm(pairs)
 
     _ = Parallel(n_jobs=num_cores)(
-        delayed(process_pair)(idx, p, target_path, audio_window_len) for idx, p in enumerate(pairs))
+        delayed(process_pair)(idx, p, target_path, audio_win_len, img_width, img_height) for idx, p in enumerate(pairs))
 
 
 if __name__ == '__main__':
