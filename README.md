@@ -5,7 +5,7 @@ specific person synchronized with the input signal.
 
 ### Requirements
 
-- Python 3.7 or newer
+- Python 3.6+
 - pip
 - virtualenv
 - ffmpeg

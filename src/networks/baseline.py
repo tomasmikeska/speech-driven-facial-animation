@@ -33,7 +33,7 @@ class AudioEncoder(pl.LightningModule):
 
 class UNetFusion(pl.LightningModule):
 
-    def __init__(self, learning_rate, log_n_val_images=8):
+    def __init__(self, learning_rate=1e-3, log_n_val_images=8):
         super().__init__()
         self.learning_rate = learning_rate
         self.log_n_val_images = log_n_val_images

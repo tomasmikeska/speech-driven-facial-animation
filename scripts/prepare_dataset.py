@@ -2,7 +2,6 @@ import os
 import fire
 import pickle
 import skvideo.io
-import numpy as np
 import multiprocessing
 import face_recognition
 from joblib import Parallel, delayed
@@ -14,10 +13,6 @@ from math import floor, ceil
 
 
 STILL_IMAGE_OFFSET = 3
-
-
-def write_video(filepath, frames):
-    skvideo.io.vwrite(filepath, frames.astype(np.uint8))
 
 
 def extract_face(frame, target_width, target_height):

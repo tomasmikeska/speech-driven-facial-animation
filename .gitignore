@@ -117,3 +117,4 @@ tb_logs/
 logs/
 lr_find_fig.png
 configs/dev.yaml
+generated.mp4
