@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
+import comet_ml
 
 
 class AudioEncoder(pl.LightningModule):
@@ -32,11 +33,13 @@ class AudioEncoder(pl.LightningModule):
 
 class UNetFusion(pl.LightningModule):
 
-    def __init__(self, learning_rate):
+    def __init__(self, learning_rate, log_n_val_images=8):
         super().__init__()
+        self.learning_rate = learning_rate
+        self.log_n_val_images = log_n_val_images
+
         self.audio_encoder = AudioEncoder()
         self.loss_fn = nn.L1Loss()
-        self.learning_rate = learning_rate
 
         self.dconv_down1 = self.double_conv(3, 64)
         self.dconv_down2 = self.double_conv(64, 128)
@@ -107,7 +110,20 @@ class UNetFusion(pl.LightningModule):
         x_hat = self.forward(x)
         loss = self.loss_fn(x_hat, x['frame'])
         self.log('val_loss', loss)
-        return loss
+        return loss, x_hat
+
+    def validation_epoch_end(self, val_outputs):
+        first_val_batch = val_outputs[0]
+        _, x_hat = first_val_batch
+        for i in range(self.log_n_val_images):
+            self._log_image(x_hat[i], f'val_img_{i}')
+
+    def _log_image(self, image_tensor, image_name):
+        if isinstance(self.logger.experiment, comet_ml.Experiment):
+            self.logger.experiment.log_image(image_tensor.cpu().detach().numpy(),
+                                             name=image_name,
+                                             image_channels='first',
+                                             step=self.global_step)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)

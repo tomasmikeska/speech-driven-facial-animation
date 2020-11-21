@@ -1,5 +1,6 @@
 import os
 import hydra
+import multiprocessing
 import pytorch_lightning as pl
 from dotenv import load_dotenv
 from hydra.utils import instantiate, to_absolute_path
@@ -8,6 +9,7 @@ from torch.utils.data import DataLoader, random_split
 from dataset import GridDataset
 from pytorch_lightning.loggers import CometLogger, TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
 
 def find_lr(trainer, model, dataloader):
@@ -39,9 +41,10 @@ def load_dataset(cfg):
 
 
 def get_data_loaders(cfg):
+    num_workers = cfg.data_loader_workers or multiprocessing.cpu_count()
     train, val = load_dataset(cfg)
-    train_loader = DataLoader(train, batch_size=cfg.train_batch_size, num_workers=8)
-    val_loader = DataLoader(val, batch_size=cfg.val_batch_size, num_workers=8)
+    train_loader = DataLoader(train, batch_size=cfg.train_batch_size, num_workers=num_workers)
+    val_loader = DataLoader(val, batch_size=cfg.val_batch_size, num_workers=num_workers)
     return train_loader, val_loader
 
 
@@ -66,21 +69,24 @@ def train(cfg):
         save_top_k=cfg.checkpoint.save_top_k,
         mode=cfg.checkpoint.mode)
 
-    trainer = pl.Trainer(gpus=cfg.gpus,
+    early_stop_callback = EarlyStopping(
+        monitor=cfg.early_stopping_monitor,
+        min_delta=cfg.early_stopping_delta,
+        patience=cfg.early_stopping_patience,
+        mode=cfg.early_stopping_mode
+    )
+
+    trainer = pl.Trainer(max_epochs=cfg.max_epochs,
+                         val_check_interval=cfg.val_check_interval,
+                         num_sanity_val_steps=-1,
+                         gpus=cfg.gpus,
                          precision=cfg.precision,
+                         terminate_on_nan=True,
                          logger=logger,
-                         callbacks=[checkpoint_callback])
+                         callbacks=[checkpoint_callback, early_stop_callback])
     trainer.fit(model, train_loader, val_loader)
 
 
 if __name__ == '__main__':
     load_dotenv()
     train()
-
-
-# Inferencni skript
-# vyresit logovani val_loss
-# logovat obrazky
-# Refactoring
-# Doprocesovat dataset
-# Upravit README.md

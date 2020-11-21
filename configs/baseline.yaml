@@ -1,11 +1,12 @@
 # Hyperparameters
+max_epochs: 100
 train_batch_size: 128
 val_batch_size: ${train_batch_size}
 learning_rate: 2e-4
 
 # Dataset
-dataset_path: ./data/grid/processed/
-train_split_size: 0.8
+dataset_path: data/grid/processed/
+train_split_size: 0.9
 input_image_height: 96
 input_image_width: 96
 output_image_height: ${input_image_height}
@@ -21,9 +22,14 @@ model:
     learning_rate: ${learning_rate}
 
 # Training
+val_check_interval: 0.25
 gpus: 1
 precision: 16
 data_loader_workers: null  # Set to max CPU cores
+early_stopping_monitor: 'val_loss'
+early_stopping_delta: 0
+early_stopping_patience: 10
+early_stopping_mode: 'min'
 
 # Checkpointing
 checkpoint:
@@ -33,5 +39,6 @@ checkpoint:
 
 # Logging
 logs:
-    path: '../logs/'
+    path: logs/
     use_comet: True
+    log_n_val_images: 10  # How many images from first validation batch to log
