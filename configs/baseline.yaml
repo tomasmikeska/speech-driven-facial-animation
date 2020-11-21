@@ -34,4 +34,4 @@ checkpoint:
 # Logging
 logs:
     path: '../logs/'
-    use_comet: False
+    use_comet: True

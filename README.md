@@ -33,5 +33,12 @@ Prepare dataset (create .pkl files with short audio recordings with correspondin
 $ python scripts/prepare_dataset.py
 ```
 
+[optional] Add `.env` file with credentials configuration
+```
+COMET_API_KEY={apikey}
+COMET_PROJECTNAME={projectname}
+COMET_WORKSPACE={workspace}
+```
+
 
 [TBD]

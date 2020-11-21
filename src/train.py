@@ -78,7 +78,6 @@ if __name__ == '__main__':
     train()
 
 
-# Upravit prepare_dataset.py - paralelni a spojit s align
 # Inferencni skript
 # vyresit logovani val_loss
 # logovat obrazky
