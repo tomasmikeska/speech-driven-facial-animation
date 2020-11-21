@@ -8,6 +8,7 @@ specific person synchronized with the input signal.
 - Python 3.7 or newer
 - pip
 - virtualenv
+- ffmpeg
 
 ### Installation
 

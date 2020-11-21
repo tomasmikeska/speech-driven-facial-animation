@@ -113,3 +113,5 @@ data/*
 models/*
 tb_logs/
 *.zip
+logs/
+lr_find_fig.png
