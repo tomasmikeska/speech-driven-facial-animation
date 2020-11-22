@@ -39,6 +39,7 @@ Pillow==8.0.1
 protobuf==3.14.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
+pyee==8.1.0
 Pygments==2.7.2
 pyparsing==2.4.7
 pyrsistent==0.17.3

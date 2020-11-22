@@ -2,7 +2,7 @@ import os
 import fire
 import torch
 import numpy as np
-import skvideo.io
+import ffmpeg
 from PIL import Image
 from scipy.io import wavfile
 from torchvision import transforms
@@ -10,15 +10,26 @@ from python_speech_features import mfcc
 from networks.baseline import UNetFusion
 
 
-def write_video(filepath, frames):
-    skvideo.io.vwrite(filepath, frames.astype(np.uint8))
-
-
 def get_audio_window(audio_np, audio_freq, start_time, end_time):
     start_index = round(start_time * audio_freq)
     padding_left = np.zeros(abs(min(start_index, 0)))
     end_index = int(end_time * audio_freq)
     return np.concatenate((padding_left, audio_np[max(start_index, 0):end_index]))
+
+
+def write_video(output_path, images, framerate=25, vcodec='libx264'):
+    n, height, width, channels = images.shape
+    process = (
+        ffmpeg
+        .input('pipe:', format='rawvideo', pix_fmt='rgb24', s='{}x{}'.format(width, height))
+        .output(output_path, pix_fmt='yuv420p', vcodec=vcodec, r=framerate)
+        .overwrite_output()
+        .run_async(pipe_stdin=True)
+    )
+    for frame in images:
+        process.stdin.write(frame.astype(np.uint8).tobytes())
+    process.stdin.close()
+    process.wait()
 
 
 def main(audio_path, still_image_path, checkpoint_path,
@@ -63,7 +74,7 @@ def main(audio_path, still_image_path, checkpoint_path,
         images.append(output_image)
 
     video_np = np.array(images) * 255  # Create (0, 255) range numpy array representing video
-    write_video(output_path, video_np)  # Write video without sound
+    write_video(output_path, video_np.astype(np.uint8))  # Write video without sound
     os.system(f'ffmpeg -i {output_path} -i {audio_path} -c:v copy -c:a aac -y {output_path}')  # Merge sound with video
 
 
