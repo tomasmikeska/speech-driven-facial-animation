@@ -40,5 +40,20 @@ COMET_PROJECTNAME={projectname}
 COMET_WORKSPACE={workspace}
 ```
 
+### Usage
 
-[TBD]
+Training pipeline is configures using Hydra configuration files present in `configs/`. All options in used config file
+can be overwritten using command-line arguments. (Hydra docs: https://hydra.cc/docs/intro)
+
+Train model
+```
+$ python src/train.py
+```
+
+Use trained model
+```
+$ python src/inference.py \
+    --audio_path {audio_input_file} \
+    --still_image_path {identity_image} \
+    --checkpoint_path {trained_model_checkpoint}
+```
