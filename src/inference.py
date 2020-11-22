@@ -35,13 +35,15 @@ def write_video(output_path, images, framerate=25, vcodec='libx264'):
 def main(audio_path, still_image_path, checkpoint_path,
          output_path='generated.mp4',
          output_freq=25,
+         input_img_width=96,
+         input_img_height=96,
          audio_window_size=0.35,
          mfcc_winlen=0.025,
          mfcc_winstep=0.01,
          mfcc_n=13):
 
     img_transform = transforms.Compose([
-        transforms.Resize((96, 96)),
+        transforms.Resize((input_img_height, input_img_width)),
         transforms.ToTensor()
     ])
     # Load model
