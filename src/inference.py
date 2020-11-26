@@ -5,7 +5,6 @@ import random
 import numpy as np
 import ffmpeg
 import skvideo.io
-from PIL import Image
 from scipy.io import wavfile
 from torchvision import transforms
 from python_speech_features import mfcc
@@ -51,7 +50,8 @@ def main(video_path, checkpoint_path,
     img_transform = transforms.Compose([
         transforms.ToPILImage(),
         transforms.Resize((input_img_height, input_img_width)),
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     # Load model
     model = UNetFusion.load_from_checkpoint(checkpoint_path)
@@ -76,6 +76,10 @@ def main(video_path, checkpoint_path,
                                 winlen=mfcc_winlen,
                                 winstep=mfcc_winstep,
                                 numcep=mfcc_n).astype('float32')
+        # Normalize MFCC features
+        audio_frame_mfcc = audio_frame_mfcc - audio_frame_mfcc.mean()
+        audio_scale = np.absolute(audio_frame_mfcc).max()
+        audio_frame_mfcc = audio_frame_mfcc / (audio_scale if audio_scale != 0 else 1)
         audio_frame_tensor = torch.from_numpy(audio_frame_mfcc).unsqueeze(0)
 
         output_image = model({'audio': audio_frame_tensor, 'still_images': still_images})
