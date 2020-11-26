@@ -21,14 +21,11 @@ def find_lr(trainer, model, dataloader):
 
 def load_dataset(cfg):
     dataset = GridDataset(to_absolute_path(cfg.dataset_path),
-                          cfg.audio_freq,
-                          cfg.mfcc_winlen,
-                          cfg.mfcc_winstep,
-                          cfg.mfcc_n,
                           id_image_transform=transforms.Compose([
                               transforms.ToPILImage(),
                               transforms.Resize((cfg.input_image_width, cfg.input_image_height)),
-                              transforms.ToTensor()
+                              transforms.ToTensor(),
+                              transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
                           ]),
                           target_image_transform=transforms.Compose([
                               transforms.ToPILImage(),
@@ -73,8 +70,7 @@ def train(cfg):
         monitor=cfg.early_stopping_monitor,
         min_delta=cfg.early_stopping_delta,
         patience=cfg.early_stopping_patience,
-        mode=cfg.early_stopping_mode
-    )
+        mode=cfg.early_stopping_mode)
 
     trainer = pl.Trainer(max_epochs=cfg.max_epochs,
                          val_check_interval=cfg.val_check_interval,

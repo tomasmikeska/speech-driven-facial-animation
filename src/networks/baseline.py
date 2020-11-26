@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import pytorch_lightning as pl
 import comet_ml
 
@@ -11,15 +10,20 @@ class AudioEncoder(pl.LightningModule):
         super().__init__()
         self.conv_net = nn.Sequential(
             nn.Conv2d(1, 64, 3, padding=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.Conv2d(64, 128, 3),
+            nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=(2, 1), padding=1),
             nn.Conv2d(128, 256, 3),
+            nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.Conv2d(256, 256, 3),
+            nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.Conv2d(256, 512, 3),
+            nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
             nn.AdaptiveAvgPool2d((1, 1))
@@ -28,12 +32,12 @@ class AudioEncoder(pl.LightningModule):
 
     def forward(self, input_mfcc):
         emb = self.conv_net(input_mfcc.unsqueeze(1)).view(-1, 512)
-        return torch.tanh(self.fc(emb))
+        return self.fc(emb)
 
 
 class UNetFusion(pl.LightningModule):
 
-    def __init__(self, learning_rate=1e-3, log_n_val_images=8):
+    def __init__(self, learning_rate=1e-3, log_n_val_images=10, num_still_images=5):
         super().__init__()
         self.learning_rate = learning_rate
         self.log_n_val_images = log_n_val_images
@@ -41,11 +45,12 @@ class UNetFusion(pl.LightningModule):
         self.audio_encoder = AudioEncoder()
         self.loss_fn = nn.L1Loss()
 
-        self.dconv_down1 = self.double_conv(3, 64)
+        self.dconv_down1 = self.double_conv(3 * num_still_images, 64)
         self.dconv_down2 = self.double_conv(64, 128)
         self.dconv_down3 = self.double_conv(128, 256)
         self.dconv_down4 = self.double_conv(256, 512)
 
+        self.fus_relu = nn.ReLU()
         self.fus_conv = nn.Conv2d(512, 256, 1)
 
         self.maxpool = nn.MaxPool2d(2)
@@ -66,7 +71,8 @@ class UNetFusion(pl.LightningModule):
         )
 
     def forward(self, x_in):
-        conv1 = self.dconv_down1(x_in['still_image'])
+        x_still_images = torch.cat(x_in['still_images'], 1)  # Concat images channel-wise
+        conv1 = self.dconv_down1(x_still_images)
         x = self.maxpool(conv1)
 
         conv2 = self.dconv_down2(x)
@@ -77,7 +83,7 @@ class UNetFusion(pl.LightningModule):
 
         x = self.dconv_down4(x)
 
-        x = F.relu(self.fus_conv(x))
+        x = self.fus_relu(self.fus_conv(x))
         _, _, h, w = x.shape
         audio_emb = self.audio_encoder(x_in['audio'])
         audio_emb = audio_emb.view(-1, 256, 1, 1).repeat(1, 1, h, w)

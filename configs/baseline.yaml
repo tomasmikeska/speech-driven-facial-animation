@@ -6,11 +6,12 @@ learning_rate: 2e-4
 
 # Dataset
 dataset_path: data/grid/processed/
-train_split_size: 0.9
-input_image_height: 96
-input_image_width: 96
+train_split_size: 0.95
+input_image_height: 64
+input_image_width: 64
 output_image_height: ${input_image_height}
 output_image_width: ${input_image_width}
+num_still_images: 5
 audio_freq: 16000
 mfcc_winlen: 0.025
 mfcc_winstep: 0.01
@@ -20,6 +21,8 @@ mfcc_n: 13
 model:
     _target_: networks.baseline.UNetFusion
     learning_rate: ${learning_rate}
+    log_n_val_images: ${logs.log_n_val_images}
+    num_still_images: ${num_still_images}
 
 # Training
 val_check_interval: 0.25

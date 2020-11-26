@@ -1,22 +1,19 @@
 import pickle
 import torch
-from python_speech_features import mfcc
+import numpy as np
+from matplotlib.pyplot import imread
 from torch.utils.data import Dataset
 from utils import file_listing
 
 
 class GridDataset(Dataset):
 
-    def __init__(self, base_path, audio_freq, mfcc_winlen, mfcc_winstep, mfcc_n,
+    def __init__(self, base_path,
                  audio_transform=None,
                  id_image_transform=None,
                  target_image_transform=None):
         self.base_path = base_path
-        self.audio_freq = audio_freq
-        self.mfcc_winlen = mfcc_winlen
-        self.mfcc_winstep = mfcc_winstep
-        self.mfcc_n = mfcc_n
-        self.filepaths = file_listing(base_path, extension='pkl')
+        self.filepaths = file_listing(base_path + '/meta/', extension='pkl')
         self.audio_transform = audio_transform
         self.id_image_transform = id_image_transform
         self.target_image_transform = target_image_transform
@@ -25,20 +22,23 @@ class GridDataset(Dataset):
         if torch.is_tensor(index):
             index = index.tolist()
 
-        data_point = pickle.load(open(self.filepaths[index], 'rb'))
-        data_point['audio'] = mfcc(data_point['audio'], self.audio_freq,
-                                   winlen=self.mfcc_winlen,
-                                   winstep=self.mfcc_winstep,
-                                   numcep=self.mfcc_n).astype('float32')
+        frame_data = pickle.load(open(self.filepaths[index], 'rb'))
+        frame = imread(frame_data['frame_path'])
+        still_images = np.load(frame_data['still_images_path'])
+        audio_mfcc = frame_data['mfcc'].astype('float32')
+        # Normalize MFCC features
+        audio_mfcc = audio_mfcc - audio_mfcc.mean()
+        audio_scale = np.absolute(audio_mfcc).max()
+        audio_mfcc = audio_mfcc / (audio_scale if audio_scale != 0 else 1)
 
         if self.audio_transform:
-            data_point['audio'] = self.audio_transform(data_point['audio'])
+            audio_mfcc = self.audio_transform(audio_mfcc)
         if self.id_image_transform:
-            data_point['still_image'] = self.id_image_transform(data_point['still_image'])
+            still_images = [self.id_image_transform(img) for img in still_images]
         if self.target_image_transform:
-            data_point['frame'] = self.target_image_transform(data_point['frame'])
+            frame = self.target_image_transform(frame)
 
-        return data_point
+        return {'audio': audio_mfcc, 'frame': frame, 'still_images': still_images}
 
     def __len__(self):
         return len(self.filepaths)
