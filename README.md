@@ -59,7 +59,6 @@ $ python src/train.py
 Use trained model
 ```
 $ python src/inference.py \
-    --audio_path {audio_input_file} \
-    --still_image_path {identity_image} \
+    --video_path {audio_input_file} \
     --checkpoint_path {trained_model_checkpoint}
 ```
