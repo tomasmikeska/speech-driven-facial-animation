@@ -28,7 +28,13 @@ Download GRID dataset
 $ ./scripts/download-grid.sh
 ```
 
-Prepare dataset (create .pkl files with short audio recordings with corresponding input and output image frame with faces extracted)
+Extract face landmarks from all video frames \
+*Note: This may take tens of GPU hours*
+```
+$ python scripts/extract_landmarks.py
+```
+
+Prepare dataset (extract faces from videos and create .pkl file for each data point including links to audio and frames)
 ```
 $ python scripts/prepare_dataset.py
 ```
@@ -42,7 +48,7 @@ COMET_WORKSPACE={workspace}
 
 ### Usage
 
-Training pipeline is configures using Hydra configuration files present in `configs/`. All options in used config file
+Training pipeline is configured using Hydra config files present in `configs/`. All options in config file
 can be overwritten using command-line arguments. (Hydra docs: https://hydra.cc/docs/intro)
 
 Train model

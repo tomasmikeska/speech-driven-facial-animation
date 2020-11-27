@@ -5,10 +5,12 @@ import random
 import numpy as np
 import ffmpeg
 import skvideo.io
+import face_alignment
 from scipy.io import wavfile
 from torchvision import transforms
 from python_speech_features import mfcc
 from networks.baseline import UNetFusion
+from extract_face import extract_face, extract_landmarks
 
 
 def get_audio_window(audio_np, audio_freq, start_time, end_time):
@@ -37,8 +39,8 @@ def main(video_path, checkpoint_path,
          output_path='generated.mp4',
          output_freq=25,
          num_still_images=5,
-         input_img_width=64,
-         input_img_height=64,
+         img_width=64,
+         img_height=64,
          audio_window_size=0.35,
          mfcc_winlen=0.025,
          mfcc_winstep=0.01,
@@ -49,7 +51,6 @@ def main(video_path, checkpoint_path,
 
     img_transform = transforms.Compose([
         transforms.ToPILImage(),
-        transforms.Resize((input_img_height, input_img_width)),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
@@ -58,6 +59,8 @@ def main(video_path, checkpoint_path,
     # Read video
     video_np = skvideo.io.vread(video_path)
     still_images = random.sample(list(video_np), num_still_images)
+    fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, face_detector='blazeface')
+    still_images = [extract_face(img, extract_landmarks(img, fa)[0], img_width, img_height) for img in still_images]
     still_images = [img_transform(img).unsqueeze(0) for img in still_images]
     # Read audio
     audio_freq, audio_np = wavfile.read(audio_path)

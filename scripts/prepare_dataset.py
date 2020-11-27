@@ -1,3 +1,6 @@
+import sys
+from os.path import dirname, join
+sys.path.append(join(dirname(__file__), '../src/'))
 import os
 import fire
 import pickle
@@ -5,62 +8,25 @@ import random
 import numpy as np
 import skvideo.io
 import multiprocessing
-import face_recognition
 from joblib import Parallel, delayed
 from scipy.io import wavfile
 from PIL import Image
 from python_speech_features import mfcc
-from os import listdir
-from os.path import isfile, isdir, join
 from tqdm import tqdm
 from math import ceil
-
-
-def extract_face(frame, target_width, target_height):
-    faces = face_recognition.face_locations(frame)
-    img_pil = Image.fromarray(frame)
-
-    if len(faces) != 1:
-        return np.array(img_pil.resize((target_width, target_height), Image.ANTIALIAS))
-
-    top, right, bottom, left = faces[0]
-    x, y, width, height = left, top, right - left, bottom - top
-
-    if width / height > target_width / target_height:
-        fin_width  = width
-        fin_height = int(fin_width * (target_height / float(target_width)))
-        fin_x      = x
-        fin_y      = y - (fin_height - height) / 2
-    else:
-        fin_height = height
-        fin_width  = int(fin_height * (target_width / float(target_height)))
-        fin_x      = x - (fin_width - width) / 2
-        fin_y      = y
-
-    img_pil = img_pil.crop((fin_x, fin_y, fin_x + fin_width, fin_y + fin_height))
-    img_pil = img_pil.resize((target_width, target_height), Image.ANTIALIAS)
-    return np.array(img_pil)
+from extract_face import extract_face
+from utils import mkdir, file_listing, dir_listing, get_file_name
 
 
 def read_video(filepath):
     return skvideo.io.vread(filepath)
 
 
-def file_listing(dir, extension=None):
-    files = [join(dir, f) for f in listdir(dir) if isfile(join(dir, f))]
-    if extension:
-        files = list(filter(lambda f: f.endswith('.' + extension), files))
-    return files
-
-
-def dir_listing(base_dir):
-    return [join(base_dir, d) for d in listdir(base_dir) if isdir(join(base_dir, d))]
-
-
 def find_data_paths(base_path):
     audio_paths = [f for d in dir_listing(base_path + 'audio/') for f in file_listing(d, extension='wav')]
-    audio_video_pairs = [(p, p.replace('audio/', 'video/').replace('.wav', '.mpg')) for p in audio_paths]
-    return [{'audio': p[0], 'video': p[1]} for p in audio_video_pairs]
+    landmark_paths = [f'{base_path}/landmarks/{get_file_name(p)}.npy' for p in audio_paths]
+    video_paths = [p.replace('audio/', 'video/').replace('.wav', '.mpg') for p in audio_paths]
+    return [{'audio': a, 'video': v, 'landmarks': l} for a, v, l in zip(audio_paths, video_paths, landmark_paths)]
 
 
 def process_pair(pair_idx,
@@ -75,7 +41,8 @@ def process_pair(pair_idx,
                  num_still_images):
     audio_freq, audio_np = wavfile.read(pair['audio'])
     video_np = read_video(pair['video'])
-    video_frames = [extract_face(frame, img_width, img_height) for frame in video_np]
+    landmarks = np.load(pair['landmarks'], allow_pickle=True)
+    video_frames = [extract_face(f, l, img_width, img_height) for f, l in zip(video_np, landmarks)]
 
     if len(video_frames) <= num_still_images:
         return
@@ -122,14 +89,10 @@ def build_dataset(base_path='data/grid/',
                   num_still_images=5,
                   num_cores=multiprocessing.cpu_count()):
 
-    if not os.path.exists(target_path):
-        os.makedirs(target_path)
-    if not os.path.exists(target_path + 'meta/'):
-        os.makedirs(target_path + 'meta/')
-    if not os.path.exists(target_path + 'frames/'):
-        os.makedirs(target_path + 'frames/')
-    if not os.path.exists(target_path + 'still_images/'):
-        os.makedirs(target_path + 'still_images/')
+    mkdir(target_path)
+    mkdir(target_path + 'meta/')
+    mkdir(target_path + 'frames/')
+    mkdir(target_path + 'still_images/')
 
     pairs = find_data_paths(base_path)
     pairs = tqdm(pairs)
