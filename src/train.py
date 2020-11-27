@@ -64,22 +64,26 @@ def train(cfg):
         monitor=cfg.checkpoint.monitor,
         filename=f'{model}' + '-{epoch:02d}-{val_loss:.2f}',
         save_top_k=cfg.checkpoint.save_top_k,
-        mode=cfg.checkpoint.mode)
+        mode=cfg.checkpoint.mode
+    )
 
     early_stop_callback = EarlyStopping(
         monitor=cfg.early_stopping_monitor,
         min_delta=cfg.early_stopping_delta,
         patience=cfg.early_stopping_patience,
-        mode=cfg.early_stopping_mode)
+        mode=cfg.early_stopping_mode
+    )
 
-    trainer = pl.Trainer(max_epochs=cfg.max_epochs,
-                         val_check_interval=cfg.val_check_interval,
-                         num_sanity_val_steps=-1,
-                         gpus=cfg.gpus,
-                         precision=cfg.precision,
-                         terminate_on_nan=True,
-                         logger=logger,
-                         callbacks=[checkpoint_callback, early_stop_callback])
+    trainer = pl.Trainer(
+        max_epochs=cfg.max_epochs,
+        val_check_interval=cfg.val_check_interval,
+        num_sanity_val_steps=-1,
+        gpus=cfg.gpus,
+        precision=cfg.precision,
+        terminate_on_nan=True,
+        logger=logger,
+        callbacks=[checkpoint_callback, early_stop_callback]
+    )
     trainer.fit(model, train_loader, val_loader)
 
 

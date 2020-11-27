@@ -72,6 +72,8 @@ class UNetFusion(pl.LightningModule):
 
     def forward(self, x_in):
         x_still_images = torch.cat(x_in['still_images'], 1)  # Concat images channel-wise
+
+        # U-Net encoder
         conv1 = self.dconv_down1(x_still_images)
         x = self.maxpool(conv1)
 
@@ -83,12 +85,15 @@ class UNetFusion(pl.LightningModule):
 
         x = self.dconv_down4(x)
 
+        # Fuse output of AudioEncoder (e.g. 1x512 vector) with output of U-Net encoder (e.g. 512x6x6 tensor)
+        # by repeating audio embedding and concating channel-wise with U-Net feature map (resulting in 1024x6x6 tensor)
         x = self.fus_relu(self.fus_conv(x))
         _, _, h, w = x.shape
         audio_emb = self.audio_encoder(x_in['audio'])
         audio_emb = audio_emb.view(-1, 256, 1, 1).repeat(1, 1, h, w)
         x = torch.cat([x, audio_emb], dim=1)
 
+        # U-Net decoder
         x = self.upsample(x)
         x = torch.cat([x, conv3], dim=1)
 
