@@ -5,22 +5,21 @@ specific person synchronized with the input signal.
 
 ### Requirements
 
-- Python 3.6+
-- pip
-- virtualenv
-- ffmpeg
+- Docker
+- NVIDIA Container Toolkit ([nvidia-docker](https://github.com/NVIDIA/nvidia-docker))
 
 ### Installation
 
-Create and activate virtual environment
+Build Docker image
 ```
-$ virtualenv venv
-$ source venv/bin/activate
+$ docker build -t facial-animation .
 ```
 
-Install PyPI packages
+Run nvidia-docker image
 ```
-$ pip install -r requirements.txt
+$ docker run -it -v $(pwd):/speech-driven-facial-animation \
+  --gpus all --ipc=host --runtime=nvidia  \
+  facial-animation bash
 ```
 
 Download GRID dataset
