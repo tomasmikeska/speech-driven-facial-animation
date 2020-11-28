@@ -19,10 +19,13 @@ def extract_landmarks(dataset_path='data/grid/', initial_index=0):
     filepaths_subset = filepaths[initial_index:]
 
     for video_path in tqdm(filepaths_subset, initial=initial_index, total=len(filepaths)):
-        frames = skvideo.io.vread(video_path).transpose(0, 3, 1, 2)
-        video_tensor = torch.Tensor(frames)
-        landmarks = fa.get_landmarks_from_batch(video_tensor.cuda())
-        np.save(f'{dataset_path}/landmarks/{get_file_name(video_path)}.npy', landmarks)
+        try:
+            frames = skvideo.io.vread(video_path).transpose(0, 3, 1, 2)
+            video_tensor = torch.Tensor(frames)
+            landmarks = fa.get_landmarks_from_batch(video_tensor.cuda())
+            np.save(f'{dataset_path}/landmarks/{get_file_name(video_path)}.npy', landmarks)
+        except Exception:
+            print('Failed to process file', video_path)
 
 
 if __name__ == '__main__':

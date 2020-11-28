@@ -15,7 +15,7 @@ from python_speech_features import mfcc
 from tqdm import tqdm
 from math import ceil
 from extract_face import extract_face
-from utils import mkdir, file_listing, dir_listing, get_file_name
+from utils import mkdir, file_listing, dir_listing, get_file_name, file_exists
 
 
 def read_video(filepath):
@@ -26,7 +26,9 @@ def find_data_paths(base_path):
     audio_paths = [f for d in dir_listing(base_path + 'audio/') for f in file_listing(d, extension='wav')]
     landmark_paths = [f'{base_path}/landmarks/{get_file_name(p)}.npy' for p in audio_paths]
     video_paths = [p.replace('audio/', 'video/').replace('.wav', '.mpg') for p in audio_paths]
-    return [{'audio': a, 'video': v, 'landmarks': l} for a, v, l in zip(audio_paths, video_paths, landmark_paths)]
+    paths = [{'audio': a, 'video': v, 'landmarks': l} for a, v, l in zip(audio_paths, video_paths, landmark_paths)]
+    paths = [p for p in paths if file_exists(p['landmarks'])]
+    return paths
 
 
 def process_pair(pair_idx,
