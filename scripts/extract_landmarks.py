@@ -15,8 +15,8 @@ fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, face_detecto
 
 def extract_landmarks(dataset_path='data/grid/', initial_index=0):
     mkdir(dataset_path + '/landmarks')
-    filepaths = [f for d in dir_listing(dataset_path + '/video/') for f in file_listing(d, extension='mpg')]
-    filepaths_subset = filepaths[initial_index:]
+    filepaths = [f for d in sorted(dir_listing(dataset_path + '/video/')) for f in file_listing(d, extension='mpg')]
+    filepaths_subset = sorted(filepaths[initial_index:])
 
     for video_path in tqdm(filepaths_subset, initial=initial_index, total=len(filepaths)):
         try:
