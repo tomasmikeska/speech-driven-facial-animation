@@ -1,17 +1,17 @@
 # Hyperparameters
-max_epochs: 100
-train_batch_size: 128
+max_epochs: 1
+train_batch_size: 16
 val_batch_size: ${train_batch_size}
 learning_rate: 2e-4
 
 # Dataset
 dataset_path: data/grid/processed/
-train_split_size: 0.95
-input_image_height: 64
-input_image_width: 64
+train_split_size: 0.99
+input_image_height: 256
+input_image_width: 256
 output_image_height: ${input_image_height}
 output_image_width: ${input_image_width}
-num_still_images: 5
+num_still_images: 16
 audio_freq: 16000
 mfcc_winlen: 0.025
 mfcc_winstep: 0.01
@@ -23,12 +23,13 @@ model:
     learning_rate: ${learning_rate}
     log_n_val_images: ${logs.log_n_val_images}
     num_still_images: ${num_still_images}
+    ckpt_path: logs/speech-driven-facial-animation/db4fc3f470684463acee876de5572f21/checkpoints/unet-fusion-epoch=03-val_loss=0.04-v0.ckpt
 
 # Training
-val_check_interval: 0.25
+val_check_interval: 0.1
 gpus: 1
 precision: 16
-data_loader_workers: null  # Set to max CPU cores
+data_loader_workers: 6  # Set to max CPU cores
 early_stopping_monitor: 'val_loss'
 early_stopping_delta: 0
 early_stopping_patience: 10
@@ -44,4 +45,4 @@ checkpoint:
 logs:
     path: logs/
     use_comet: True
-    log_n_val_images: 10  # How many images from first validation batch to log
+    log_n_val_images: 5  # How many images from first validation batch to log

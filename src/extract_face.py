@@ -33,7 +33,7 @@ def _alignment(src_img, landmarks, target_width, target_height):
     return face_img
 
 
-def extract_face(img_np, landmarks, target_width, target_height):
+def extract_face(img_np, landmarks, target_width=256, target_height=256):
     '''
     Extract face from image and normalize using similarity transformation
     Args:

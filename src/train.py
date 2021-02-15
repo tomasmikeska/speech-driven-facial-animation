@@ -7,6 +7,7 @@ from hydra.utils import instantiate, to_absolute_path
 from torchvision import transforms
 from torch.utils.data import DataLoader, random_split
 from dataset import GridDataset
+from networks.baseline import UNetFusion
 from pytorch_lightning.loggers import CometLogger, TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
@@ -21,6 +22,7 @@ def find_lr(trainer, model, dataloader):
 
 def load_dataset(cfg):
     dataset = GridDataset(to_absolute_path(cfg.dataset_path),
+                          n_identity_images=cfg.num_still_images,
                           id_image_transform=transforms.Compose([
                               transforms.ToPILImage(),
                               transforms.Resize((cfg.input_image_width, cfg.input_image_height)),
@@ -55,7 +57,10 @@ def load_comet_logger(cfg):
 @hydra.main(config_path='../configs/', config_name='baseline')
 def train(cfg):
     train_loader, val_loader = get_data_loaders(cfg)
-    model = instantiate(cfg.model)
+    if cfg.model.ckpt_path:
+        model = UNetFusion.load_from_checkpoint(to_absolute_path(cfg.model.ckpt_path))
+    else:
+        model = instantiate(cfg.model)
 
     comet_logger = load_comet_logger(cfg) if cfg.logs.use_comet else None
     logger = comet_logger or TensorBoardLogger(to_absolute_path(cfg.logs.path))
@@ -82,7 +87,8 @@ def train(cfg):
         precision=cfg.precision,
         terminate_on_nan=True,
         logger=logger,
-        callbacks=[checkpoint_callback, early_stop_callback]
+        callbacks=[checkpoint_callback, early_stop_callback],
+        accumulate_grad_batches=4
     )
     trainer.fit(model, train_loader, val_loader)
 

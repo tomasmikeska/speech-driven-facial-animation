@@ -37,7 +37,7 @@ class AudioEncoder(pl.LightningModule):
 
 class UNetFusion(pl.LightningModule):
 
-    def __init__(self, learning_rate=1e-3, log_n_val_images=10, num_still_images=5):
+    def __init__(self, learning_rate=1e-3, log_n_val_images=10, num_still_images=16):
         super().__init__()
         self.learning_rate = learning_rate
         self.log_n_val_images = log_n_val_images
@@ -121,13 +121,13 @@ class UNetFusion(pl.LightningModule):
         x_hat = self.forward(x)
         loss = self.loss_fn(x_hat, x['frame'])
         self.log('val_loss', loss)
-        return loss, x_hat
+        return loss  # , x_hat
 
-    def validation_epoch_end(self, val_outputs):
-        first_val_batch = val_outputs[0]
-        _, x_hat = first_val_batch
-        for i in range(self.log_n_val_images):
-            self._log_image(x_hat[i], f'val_img_{i}')
+    # def validation_epoch_end(self, val_outputs):
+    #     first_val_batch = val_outputs[0]
+    #     _, x_hat = first_val_batch
+    #     for i in range(self.log_n_val_images):
+    #         self._log_image(x_hat[i], f'val_img_{i}')
 
     def _log_image(self, image_tensor, image_name):
         if isinstance(self.logger.experiment, comet_ml.Experiment):
